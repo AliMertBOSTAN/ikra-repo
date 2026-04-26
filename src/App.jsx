@@ -242,10 +242,59 @@ function Hero() {
   );
 }
 
-function Section({ id, label, title, children, screenLabel }) {
-  const [ref, v] = useReveal();
+function Section({ id, label, title, children, screenLabel, slide }) {
+  const [revealRef, v] = useReveal();
+  const slideRef = useRef(null);
+
+  const setRef = (node) => {
+    revealRef.current = node;
+    slideRef.current = node;
+  };
+
+  useEffect(() => {
+    if (!slide || !slideRef.current) return;
+    const el = slideRef.current;
+    const dir = slide === 'right' ? 1 : -1;
+    const MAX_VW = 28;
+    const RANGE_FACTOR = 1.15;
+    const SMOOTHING = 0.11;
+
+    let rafId = null;
+    let current = 0;
+    let target = 0;
+
+    const computeTarget = () => {
+      const rect = el.getBoundingClientRect();
+      const sectionCenter = rect.top + rect.height / 2;
+      const viewportCenter = window.innerHeight / 2;
+      const distance = sectionCenter - viewportCenter;
+      const range = window.innerHeight * RANGE_FACTOR;
+      const ratio = Math.max(0, Math.min(1, distance / range));
+      const eased = 1 - Math.cos((ratio * Math.PI) / 2);
+      target = dir * eased * MAX_VW;
+    };
+
+    const tick = () => {
+      computeTarget();
+      current += (target - current) * SMOOTHING;
+      if (Math.abs(target - current) < 0.005) current = target;
+      el.style.setProperty('--slide-x', `${current}vw`);
+      rafId = requestAnimationFrame(tick);
+    };
+
+    tick();
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [slide]);
+
   return (
-    <section id={id} className="section" ref={ref} data-screen-label={screenLabel}>
+    <section
+      id={id}
+      ref={setRef}
+      className={`section ${slide ? 'section--slide' : ''}`}
+      data-screen-label={screenLabel}
+    >
       <div className={`section-head ${v ? 'in' : ''}`}>
         <span className="section-num">{label}</span>
         <h2 className="section-title">{title}</h2>
@@ -259,7 +308,7 @@ function Section({ id, label, title, children, screenLabel }) {
 function About() {
   const { t } = useT();
   return (
-    <Section id="about" label={t.about.label} title={t.about.title} screenLabel="02 Profile">
+    <Section id="about" label={t.about.label} title={t.about.title} screenLabel="02 Profile" slide="left">
       <div className="about-grid">
         <div className="about-col">
           <p className="lede">{t.about.text}</p>
@@ -283,7 +332,7 @@ function About() {
 function Experience() {
   const { t } = useT();
   return (
-    <Section id="experience" label={t.experience.label} title={t.experience.title} screenLabel="03 Experience">
+    <Section id="experience" label={t.experience.label} title={t.experience.title} screenLabel="03 Experience" slide="right">
       <ol className="timeline">
         {t.experience.items.map((e, i) => (
           <li key={i} className="t-item">
@@ -431,7 +480,7 @@ function Certifications() {
 function Education() {
   const { t } = useT();
   return (
-    <Section id="education" label={t.education.label} title={t.education.title} screenLabel="04 Education">
+    <Section id="education" label={t.education.label} title={t.education.title} screenLabel="04 Education" slide="left">
       <div className="edu-grid">
         {t.education.items.map((e, i) => (
           <article key={i} className="edu-card">

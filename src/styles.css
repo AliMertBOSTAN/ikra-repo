@@ -1208,3 +1208,12 @@ body, .nav, .marquee, .skill-bar, .t-item, .edu-card, .cv-btn, .lang-switch butt
   .cert-pageinfo { min-width: 48px; font-size: 10px; }
   .cert-pager-btn { width: 30px; height: 30px; }
 }
+
+/* ====== Scroll-linked horizontal slide for Profile / Experience / Education ====== */
+.section--slide {
+  transform: translate3d(var(--slide-x, 0), 0, 0);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .section--slide { transform: none !important; }
+}
